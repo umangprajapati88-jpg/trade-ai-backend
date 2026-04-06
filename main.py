@@ -12,6 +12,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_greeks(confidence):
+    if confidence > 80:
+        return {
+            "delta": 0.6,
+            "theta": -20
+        }
+    else:
+        return {
+            "delta": 0.4,
+            "theta": -35
+        }
+
+import yfinance as yf
+
+def get_chart_trend():
+    data = yf.download("^NSEI", period="1d", interval="5m")
+
+    close = data["Close"]
+
+    if close.iloc[-1] > close.iloc[-5]:
+        return "UPTREND"
+    elif close.iloc[-1] < close.iloc[-5]:
+        return "DOWNTREND"
+    else:
+        return "SIDEWAYS"
+
 def get_news_sentiment():
     import requests
 
@@ -192,6 +218,10 @@ def market():
         chart_signal = "STRONG BEARISH"
     else:
         chart_signal = "WEAK / SIDEWAYS"
+
+        news_bias = get_news_sentiment()
+        chart_trend = get_chart_trend()
+        greeks = get_greeks(confidence)
     
         return {
         "nifty": nifty,
@@ -209,6 +239,11 @@ def market():
         "stop_loss": sl,
         "target": target,
         "confidence": confidence,
+
+        "news_bias": news_bias,
+        "chart_trend": chart_trend,
+        "delta": greeks["delta"],
+        "theta": greeks["theta"],
 
         "reason": f"{structure}, Volume: {volume_strength}, Momentum: {momentum_strength}"
     }
