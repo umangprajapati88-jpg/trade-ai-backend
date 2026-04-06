@@ -16,15 +16,25 @@ app.add_middleware(
 def home():
     return {"status": "Trade AI backend running"}
 
+import requests
+
 @app.get("/market")
 def market():
-    url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
+    session = requests.Session()
 
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br"
     }
 
-    response = requests.get(url, headers=headers)
+    # Step 1: Get cookies
+    session.get("https://www.nseindia.com", headers=headers)
+
+    # Step 2: Fetch option chain
+    url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
+    response = session.get(url, headers=headers)
+
     data = response.json()
 
     records = data["records"]["data"]
@@ -32,31 +42,24 @@ def market():
     total_ce_oi = 0
     total_pe_oi = 0
 
-    # Calculate total OI
     for item in records:
         if "CE" in item:
             total_ce_oi += item["CE"]["openInterest"]
         if "PE" in item:
             total_pe_oi += item["PE"]["openInterest"]
 
-    # PCR calculation
     pcr = round(total_pe_oi / total_ce_oi, 2)
 
-    # Bias logic
     if pcr > 1.3:
         bias = "BULLISH"
-        reason = "High Put OI → strong support"
     elif pcr < 0.7:
         bias = "BEARISH"
-        reason = "High Call OI → strong resistance"
     else:
         bias = "NEUTRAL"
-        reason = "Balanced OI"
 
     return {
         "pcr": pcr,
-        "total_call_oi": total_ce_oi,
-        "total_put_oi": total_pe_oi,
-        "bias": bias,
-        "reason": reason
+        "call_oi": total_ce_oi,
+        "put_oi": total_pe_oi,
+        "bias": bias
     }
