@@ -12,6 +12,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_news_sentiment():
+    import requests
+
+    api_key = "6bfc206c380c48aaa3240656d666283e"
+
+    url = f"https://newsapi.org/v2/everything?q=stock%20market%20india&apiKey={api_key}"
+
+    response = requests.get(url)
+    data = response.json()
+
+    articles = data.get("articles", [])[:5]
+
+    score = 0
+
+    for a in articles:
+        title = a["title"].lower()
+
+        if "crash" in title or "fall" in title:
+            score -= 1
+        elif "rally" in title or "gain" in title:
+            score += 1
+
+    if score > 0:
+        return "BULLISH"
+    elif score < 0:
+        return "BEARISH"
+    else:
+        return "NEUTRAL"
+
 @app.get("/")
 def home():
     return {"status": "Trade AI backend running"}
