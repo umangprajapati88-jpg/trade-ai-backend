@@ -22,10 +22,54 @@ import requests
 
 @app.get("/market")
 def market():
+    # Simulated realistic inputs (we will replace with real API later)
+    nifty = 22950
+    prev_high = 23020
+    prev_low = 22880
+    pcr = 1.08
+    iv = 17.5
+
+    # Trend logic
+    if nifty > prev_high:
+        trend = "BREAKOUT BULLISH"
+    elif nifty < prev_low:
+        trend = "BREAKDOWN BEARISH"
+    else:
+        trend = "RANGE"
+
+    # Bias logic
+    if pcr > 1.3:
+        bias = "BULLISH"
+    elif pcr < 0.7:
+        bias = "BEARISH"
+    else:
+        bias = "NEUTRAL"
+
+    # Entry logic
+    if trend == "BREAKOUT BULLISH":
+        entry = f"Buy CE above {prev_high}"
+        sl = prev_low
+        target = prev_high + 100
+        confidence = 75
+
+    elif trend == "BREAKDOWN BEARISH":
+        entry = f"Buy PE below {prev_low}"
+        sl = prev_high
+        target = prev_low - 100
+        confidence = 75
+
+    else:
+        entry = "Wait for breakout"
+        sl = "-"
+        target = "-"
+        confidence = 40
+
     return {
-        "pcr": 1.05,
-        "call_oi": 120000000,
-        "put_oi": 125000000,
-        "bias": "NEUTRAL",
-        "note": "Live NSE blocked on cloud, using fallback data"
+        "nifty": nifty,
+        "trend": trend,
+        "bias": bias,
+        "entry": entry,
+        "stop_loss": sl,
+        "target": target,
+        "confidence": confidence
     }
