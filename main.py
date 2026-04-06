@@ -22,22 +22,31 @@ import requests
 
 @app.get("/market")
 def market():
-    # Simulated realistic inputs (we will replace with real API later)
+    # Simulated market inputs (later real data)
     nifty = 22950
     prev_high = 23020
     prev_low = 22880
-    pcr = 1.08
+    open_price = 22920
+    pcr = 1.05
     iv = 17.5
 
-    # Trend logic
+    # Step 1: Market Structure
     if nifty > prev_high:
-        trend = "BREAKOUT BULLISH"
+        structure = "BREAKOUT"
     elif nifty < prev_low:
-        trend = "BREAKDOWN BEARISH"
+        structure = "BREAKDOWN"
     else:
-        trend = "RANGE"
+        structure = "RANGE"
 
-    # Bias logic
+    # Step 2: Fake Breakout Detection
+    if nifty > prev_high and pcr < 0.9:
+        trap = "BULL TRAP"
+    elif nifty < prev_low and pcr > 1.2:
+        trap = "BEAR TRAP"
+    else:
+        trap = "NO TRAP"
+
+    # Step 3: Bias
     if pcr > 1.3:
         bias = "BULLISH"
     elif pcr < 0.7:
@@ -45,31 +54,44 @@ def market():
     else:
         bias = "NEUTRAL"
 
-    # Entry logic
-    if trend == "BREAKOUT BULLISH":
-        entry = f"Buy CE above {prev_high}"
-        sl = prev_low
-        target = prev_high + 100
+    # Step 4: Entry Logic
+    if structure == "BREAKOUT" and trap == "NO TRAP":
+        action = "BUY CALL (CE)"
+        entry = prev_high
+        sl = open_price
+        target = prev_high + 120
         confidence = 75
 
-    elif trend == "BREAKDOWN BEARISH":
-        entry = f"Buy PE below {prev_low}"
-        sl = prev_high
-        target = prev_low - 100
+    elif structure == "BREAKDOWN" and trap == "NO TRAP":
+        action = "BUY PUT (PE)"
+        entry = prev_low
+        sl = open_price
+        target = prev_low - 120
         confidence = 75
+
+    elif trap != "NO TRAP":
+        action = "AVOID TRADE (TRAP DETECTED)"
+        entry = "-"
+        sl = "-"
+        target = "-"
+        confidence = 30
 
     else:
-        entry = "Wait for breakout"
+        action = "WAIT FOR BREAKOUT"
+        entry = "-"
         sl = "-"
         target = "-"
         confidence = 40
 
     return {
         "nifty": nifty,
-        "trend": trend,
+        "structure": structure,
+        "trap": trap,
         "bias": bias,
+        "action": action,
         "entry": entry,
         "stop_loss": sl,
         "target": target,
-        "confidence": confidence
+        "confidence": confidence,
+        "reason": f"Structure: {structure}, PCR: {pcr}, Trap: {trap}"
     }
