@@ -75,8 +75,52 @@ import requests
 
 import requests
 
+import yfinance as yf
+import time
+
+def get_chart_data():
+    for i in range(3):
+        try:
+            data = yf.download(
+                "NIFTYBEES.NS",
+                period="1d",
+                interval="5m",
+                timeout=10
+            )
+
+            if not data.empty:
+                return data
+
+        except Exception as e:
+            print("Retrying...", e)
+
+        time.sleep(2)
+
+    return None
+
+
+def get_chart_trend():
+    data = get_chart_data()
+
+    if data is None or len(data) < 5:
+        return "UNKNOWN"
+
+    close = data["Close"]
+
+    if close.iloc[-1] > close.iloc[-5]:
+        return "UPTREND"
+    elif close.iloc[-1] < close.iloc[-5]:
+        return "DOWNTREND"
+    else:
+        return "SIDEWAYS"
+
 @app.get("/market")
 def market():
+    chart_trend = get_chart_trend()
+    
+    if chart_trend == "UNKNOWN":
+        chart_trend = "SIDEWAYS"
+    
     # Simulated inputs
     nifty = 22950
     open_price = 22920
