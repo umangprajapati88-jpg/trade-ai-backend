@@ -145,6 +145,18 @@ def market():
         news_bias = "BEARISH"
     else:
         news_bias = "MIXED"
+
+    # Step 8: Chart Trend (Simulated)
+
+    trend_5min = "UPTREND"
+    trend_1min = "SIDEWAYS"
+
+    if trend_5min == "UPTREND" and trend_1min == "UPTREND":
+        chart_signal = "STRONG BULLISH"
+    elif trend_5min == "DOWNTREND" and trend_1min == "DOWNTREND":
+        chart_signal = "STRONG BEARISH"
+    else:
+        chart_signal = "WEAK / SIDEWAYS"
     
         return {
         "nifty": nifty,
