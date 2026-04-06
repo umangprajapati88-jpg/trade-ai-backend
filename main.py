@@ -76,14 +76,20 @@ def market():
         trap = "VALID"
 
     # Step 5: Decision logic
-    if structure == "BREAKOUT" and volume_strength == "HIGH" and trap == "VALID":
+    if (structure == "BREAKOUT" 
+        and volume_strength == "HIGH"
+        and news_bias != "BEARISH"
+        and "BULLISH" in chart_signal):
         action = "BUY CE"
         entry = prev_high
         sl = open_price
         target = prev_high + 120
         confidence = 85
 
-    elif structure == "BREAKDOWN" and volume_strength == "HIGH" and trap == "VALID":
+    elif (structure == "BREAKDOWN" 
+      and volume_strength == "HIGH"
+      and news_bias != "BULLISH"
+      and "BEARISH" in chart_signal):
         action = "BUY PE"
         entry = prev_low
         sl = open_price
