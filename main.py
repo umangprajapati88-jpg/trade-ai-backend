@@ -18,44 +18,45 @@ def home():
 
 @app.get("/market")
 def market():
-    nifty = 22950
-    pcr = 1.12
-    iv = 18.5
+    url = "https://www.nseindia.com/api/option-chain-indices?symbol=NIFTY"
 
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(url, headers=headers)
+    data = response.json()
+
+    records = data["records"]["data"]
+
+    total_ce_oi = 0
+    total_pe_oi = 0
+
+    # Calculate total OI
+    for item in records:
+        if "CE" in item:
+            total_ce_oi += item["CE"]["openInterest"]
+        if "PE" in item:
+            total_pe_oi += item["PE"]["openInterest"]
+
+    # PCR calculation
+    pcr = round(total_pe_oi / total_ce_oi, 2)
+
+    # Bias logic
     if pcr > 1.3:
         bias = "BULLISH"
-        reason = "Strong put writing → support forming"
+        reason = "High Put OI → strong support"
     elif pcr < 0.7:
         bias = "BEARISH"
-        reason = "Heavy call writing → resistance forming"
+        reason = "High Call OI → strong resistance"
     else:
         bias = "NEUTRAL"
-        reason = "No strong direction"
-
-    if bias == "BULLISH":
-        entry = "Buy above 22960"
-        sl = "22890"
-        target = "23080"
-        confidence = 65
-    elif bias == "BEARISH":
-        entry = "Sell below 22900"
-        sl = "22970"
-        target = "22800"
-        confidence = 65
-    else:
-        entry = "Wait for breakout"
-        sl = "-"
-        target = "-"
-        confidence = 40
+        reason = "Balanced OI"
 
     return {
-        "nifty": nifty,
         "pcr": pcr,
-        "iv": iv,
+        "total_call_oi": total_ce_oi,
+        "total_put_oi": total_pe_oi,
         "bias": bias,
-        "reason": reason,
-        "entry": entry,
-        "stop_loss": sl,
-        "target": target,
-        "confidence": confidence
+        "reason": reason
     }
