@@ -17,11 +17,44 @@ def home():
 
 @app.get("/market")
 def market():
+    nifty = 22950
+    pcr = 1.12
+    iv = 18.5
+
+    if pcr > 1.3:
+        bias = "BULLISH"
+        reason = "Strong put writing → support forming"
+    elif pcr < 0.7:
+        bias = "BEARISH"
+        reason = "Heavy call writing → resistance forming"
+    else:
+        bias = "NEUTRAL"
+        reason = "No strong direction"
+
+    if bias == "BULLISH":
+        entry = "Buy above 22960"
+        sl = "22890"
+        target = "23080"
+        confidence = 65
+    elif bias == "BEARISH":
+        entry = "Sell below 22900"
+        sl = "22970"
+        target = "22800"
+        confidence = 65
+    else:
+        entry = "Wait for breakout"
+        sl = "-"
+        target = "-"
+        confidence = 40
+
     return {
-        "nifty": 22950,
-        "banknifty": 48500,
-        "pcr": 1.12,
-        "iv": 18.5,
-        "bias": "NEUTRAL",
-        "reason": "OI mixed, no breakout confirmation"
+        "nifty": nifty,
+        "pcr": pcr,
+        "iv": iv,
+        "bias": bias,
+        "reason": reason,
+        "entry": entry,
+        "stop_loss": sl,
+        "target": target,
+        "confidence": confidence
     }
