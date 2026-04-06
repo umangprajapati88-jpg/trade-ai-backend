@@ -133,6 +133,18 @@ def market():
         else:
             strike = atm_strike - 50
             option_style = "OTM (Aggressive)"
+
+    # Step 7: News Sentiment (Simulated for now)
+
+    global_news = "NEGATIVE"   # POSITIVE / NEGATIVE / NEUTRAL
+    india_news = "NEUTRAL"
+
+    if global_news == "POSITIVE" and india_news != "NEGATIVE":
+        news_bias = "BULLISH"
+    elif global_news == "NEGATIVE" and india_news != "POSITIVE":
+        news_bias = "BEARISH"
+    else:
+        news_bias = "MIXED"
     
         return {
         "nifty": nifty,
