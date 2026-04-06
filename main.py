@@ -22,15 +22,24 @@ import requests
 
 @app.get("/market")
 def market():
-    # Simulated market inputs (later real data)
+    # Simulated inputs (replace with real later)
     nifty = 22950
+    open_price = 22920
     prev_high = 23020
     prev_low = 22880
-    open_price = 22920
+
+    # Weekly context (simulate last 2-3 weeks)
+    weekly_trend = "SIDEWAYS"   # TRENDING / SIDEWAYS
+    last_expiry = "VOLATILE"    # TREND / VOLATILE / RANGE
+
+    # Intraday momentum
+    momentum = nifty - open_price
+
+    # PCR & IV
     pcr = 1.05
     iv = 17.5
 
-    # Step 1: Market Structure
+    # Step 1: Structure
     if nifty > prev_high:
         structure = "BREAKOUT"
     elif nifty < prev_low:
@@ -38,46 +47,44 @@ def market():
     else:
         structure = "RANGE"
 
-    # Step 2: Fake Breakout Detection
-    if nifty > prev_high and pcr < 0.9:
-        trap = "BULL TRAP"
-    elif nifty < prev_low and pcr > 1.2:
-        trap = "BEAR TRAP"
+    # Step 2: Momentum strength
+    if momentum > 40:
+        momentum_strength = "STRONG BULLISH"
+    elif momentum < -40:
+        momentum_strength = "STRONG BEARISH"
     else:
-        trap = "NO TRAP"
+        momentum_strength = "WEAK"
 
-    # Step 3: Bias
-    if pcr > 1.3:
-        bias = "BULLISH"
-    elif pcr < 0.7:
-        bias = "BEARISH"
+    # Step 3: Expiry risk logic
+    if last_expiry == "VOLATILE":
+        risk = "HIGH"
     else:
-        bias = "NEUTRAL"
+        risk = "NORMAL"
 
-    # Step 4: Entry Logic
-    if structure == "BREAKOUT" and trap == "NO TRAP":
-        action = "BUY CALL (CE)"
+    # Step 4: Final decision logic
+    if structure == "BREAKOUT" and momentum_strength == "STRONG BULLISH":
+        action = "BUY CE"
         entry = prev_high
         sl = open_price
         target = prev_high + 120
-        confidence = 75
+        confidence = 80
 
-    elif structure == "BREAKDOWN" and trap == "NO TRAP":
-        action = "BUY PUT (PE)"
+    elif structure == "BREAKDOWN" and momentum_strength == "STRONG BEARISH":
+        action = "BUY PE"
         entry = prev_low
         sl = open_price
         target = prev_low - 120
-        confidence = 75
+        confidence = 80
 
-    elif trap != "NO TRAP":
-        action = "AVOID TRADE (TRAP DETECTED)"
+    elif weekly_trend == "SIDEWAYS":
+        action = "LOW CONFIDENCE (SIDEWAYS MARKET)"
         entry = "-"
         sl = "-"
         target = "-"
-        confidence = 30
+        confidence = 35
 
     else:
-        action = "WAIT FOR BREAKOUT"
+        action = "WAIT"
         entry = "-"
         sl = "-"
         target = "-"
@@ -86,12 +93,14 @@ def market():
     return {
         "nifty": nifty,
         "structure": structure,
-        "trap": trap,
-        "bias": bias,
+        "momentum": momentum_strength,
+        "weekly_trend": weekly_trend,
+        "expiry_behavior": last_expiry,
+        "risk_level": risk,
         "action": action,
         "entry": entry,
         "stop_loss": sl,
         "target": target,
         "confidence": confidence,
-        "reason": f"Structure: {structure}, PCR: {pcr}, Trap: {trap}"
+        "reason": f"{structure}, {momentum_strength}, Weekly: {weekly_trend}"
     }
