@@ -104,16 +104,52 @@ def market():
         target = "-"
         confidence = 40
 
-    return {
+    # Step 6: Option Selection Logic
+
+    # Find nearest strike (ATM)
+    strike_step = 50
+    atm_strike = round(nifty / strike_step) * strike_step
+
+    option_type = "-"
+    strike = "-"
+    option_style = "-"
+
+    if action == "BUY CE":
+        option_type = "CE"
+
+        if confidence >= 80:
+            strike = atm_strike
+            option_style = "ATM (Safe)"
+        else:
+            strike = atm_strike + 50
+            option_style = "OTM (Aggressive)"
+
+    elif action == "BUY PE":
+        option_type = "PE"
+
+        if confidence >= 80:
+            strike = atm_strike
+            option_style = "ATM (Safe)"
+        else:
+            strike = atm_strike - 50
+            option_style = "OTM (Aggressive)"
+    
+        return {
         "nifty": nifty,
         "structure": structure,
         "volume_strength": volume_strength,
         "momentum": momentum_strength,
         "trap": trap,
         "action": action,
+
+        "option_type": option_type,
+        "strike": strike,
+        "option_style": option_style,
+
         "entry": entry,
         "stop_loss": sl,
         "target": target,
         "confidence": confidence,
+
         "reason": f"{structure}, Volume: {volume_strength}, Momentum: {momentum_strength}"
     }
