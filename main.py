@@ -60,7 +60,7 @@ def get_chart_trend():
 
 
 def get_news_sentiment():
-    api_key = "YOUR_API_KEY"
+    api_key = "6bfc206c380c48aaa3240656d666283e"
 
     url = f"https://newsapi.org/v2/everything?q=stock%20market%20india&apiKey={api_key}"
 
