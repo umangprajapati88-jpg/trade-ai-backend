@@ -31,18 +31,31 @@ def get_chart_data():
 
 
 def get_chart_trend():
-    data = get_chart_data()
+    try:
+        data = get_chart_data()
 
-    if data is None or len(data) < 5:
-        return "SIDEWAYS"
+        if data is None or len(data) < 5:
+            return "SIDEWAYS"
 
-    close = data["Close"]
+        # ✅ FIX: flatten column
+        close = data["Close"]
 
-    if close.iloc[-1] > close.iloc[-5]:
-        return "UPTREND"
-    elif close.iloc[-1] < close.iloc[-5]:
-        return "DOWNTREND"
-    else:
+        # If multi-column → take first column
+        if hasattr(close, "columns"):
+            close = close.iloc[:, 0]
+
+        last = float(close.iloc[-1])
+        prev = float(close.iloc[-5])
+
+        if last > prev:
+            return "UPTREND"
+        elif last < prev:
+            return "DOWNTREND"
+        else:
+            return "SIDEWAYS"
+
+    except Exception as e:
+        print("Chart error:", e)
         return "SIDEWAYS"
 
 
