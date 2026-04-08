@@ -61,33 +61,33 @@ def get_chart_trend():
 
 def get_news_sentiment():
     api_key = "6bfc206c380c48aaa3240656d666283e"
-
     url = f"https://newsapi.org/v2/everything?q=stock%20market%20india&apiKey={api_key}"
 
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5) # Add timeout
         data = response.json()
+        articles = data.get("articles", [])[:10] # Look at more articles
 
-        articles = data.get("articles", [])[:5]
-
-        score = 0
-
-        for a in articles:
-            title = a["title"].lower()
-
-            if "crash" in title or "fall" in title:
-                score -= 1
-            elif "rally" in title or "gain" in title:
-                score += 1
-
-        if score > 0:
-            return "BULLISH"
-        elif score < 0:
-            return "BEARISH"
-        else:
+        if not articles:
             return "NEUTRAL"
 
-    except:
+        score = 0
+        # Expanded keywords for better detection
+        negative_words = ["crash", "fall", "down", "bear", "sell", "loss", "negative", "drop"]
+        positive_words = ["rally", "gain", "up", "bull", "buy", "profit", "positive", "surge"]
+
+        for a in articles:
+            title = a.get("title", "").lower()
+            if any(word in title for word in negative_words):
+                score -= 1
+            if any(word in title for word in positive_words):
+                score += 1
+
+        if score > 0: return "BULLISH"
+        if score < 0: return "BEARISH"
+        return "NEUTRAL"
+    except Exception as e:
+        print(f"News Error: {e}") # This helps you see the error in Render Logs
         return "NEUTRAL"
 
 
