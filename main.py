@@ -120,10 +120,10 @@ def market():
     prev_high = 23020
     prev_low = 22880
 
-    current_volume = 120000
+    current_volume = 200000
     avg_volume = 80000
 
-    momentum = nifty - open_price
+    momentum = 80
 
     # -----------------------------
     # Logic
