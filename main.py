@@ -149,11 +149,11 @@ def market():
     # -----------------------------
 
     if chart_trend == "UPTREND" and volume_strength != "LOW":
-    action = "BUY CE"
-    entry = nifty
-    sl = nifty - 50
-    target = nifty + 100
-    confidence = 70
+        action = "BUY CE"
+        entry = nifty
+        sl = nifty - 50
+        target = nifty + 100
+        confidence = 70
 
     elif structure == "BREAKDOWN" and volume_strength == "HIGH" and chart_trend == "DOWNTREND":
         action = "BUY PE"
