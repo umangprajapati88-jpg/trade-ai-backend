@@ -148,12 +148,12 @@ def market():
     # DECISION
     # -----------------------------
 
-    if structure == "BREAKOUT" and volume_strength == "HIGH" and chart_trend == "UPTREND":
-        action = "BUY CE"
-        entry = prev_high
-        sl = open_price
-        target = prev_high + 120
-        confidence = 85
+    if chart_trend == "UPTREND" and volume_strength != "LOW":
+    action = "BUY CE"
+    entry = nifty
+    sl = nifty - 50
+    target = nifty + 100
+    confidence = 70
 
     elif structure == "BREAKDOWN" and volume_strength == "HIGH" and chart_trend == "DOWNTREND":
         action = "BUY PE"
