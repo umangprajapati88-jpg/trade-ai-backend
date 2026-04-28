@@ -193,7 +193,7 @@ def market():
     # -----------------------------
 
     return {
-        "nifty": nifty,
+        "nifty": str(nifty),
         "structure": structure,
         "volume": volume_strength,
         "momentum": momentum_strength,
@@ -201,11 +201,11 @@ def market():
         "news": "NEUTRAL",
         "action": action,
         "option_type": option_type,
-        "strike": strike,
-        "entry": entry,
-        "stop_loss": sl,
-        "target": target,
-        "confidence": confidence,
-        "delta": greeks["delta"],
-        "theta": greeks["theta"],
-    }
+        "strike": str(strike),
+        "entry": str(entry),
+        "stop_loss": str(sl),
+        "target": str(target),
+        "confidence": str(confidence),
+        "delta": str(greeks["delta"]),
+        "theta": str(greeks["theta"]),
+}
