@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 import time
-import requests
 
 app = FastAPI()
 
@@ -15,7 +14,7 @@ app.add_middleware(
 )
 
 # -----------------------------
-# Helpers
+# DATA FETCH
 # -----------------------------
 
 def get_chart_data():
@@ -30,76 +29,64 @@ def get_chart_data():
     return None
 
 
-def get_chart_trend():
-    try:
-        data = get_chart_data()
+# -----------------------------
+# MARKET SNAPSHOT (REAL DATA)
+# -----------------------------
 
-        if data is None or len(data) < 5:
-            return "SIDEWAYS"
+def get_market_snapshot():
+    data = get_chart_data()
 
-        # ✅ FIX: flatten column
-        close = data["Close"]
+    if data is None or len(data) < 5:
+        return None
 
-        # If multi-column → take first column
-        if hasattr(close, "columns"):
-            close = close.iloc[:, 0]
+    close = data["Close"]
+    high = data["High"]
+    low = data["Low"]
+    open_ = data["Open"]
+    volume = data["Volume"]
 
-        last = float(close.iloc[-1])
-        prev = float(close.iloc[-5])
+    # Handle multi-column case
+    if hasattr(close, "columns"):
+        close = close.iloc[:, 0]
+        high = high.iloc[:, 0]
+        low = low.iloc[:, 0]
+        open_ = open_.iloc[:, 0]
+        volume = volume.iloc[:, 0]
 
-        if last > prev:
-            return "UPTREND"
-        elif last < prev:
-            return "DOWNTREND"
-        else:
-            return "SIDEWAYS"
+    last_close = float(close.iloc[-1])
+    prev_close = float(close.iloc[-5])
 
-    except Exception as e:
-        print("Chart error:", e)
-        return "SIDEWAYS"
+    # Trend detection
+    if last_close > prev_close:
+        trend = "UPTREND"
+    elif last_close < prev_close:
+        trend = "DOWNTREND"
+    else:
+        trend = "SIDEWAYS"
+
+    return {
+        "nifty": round(last_close * 100),  # convert ETF to index approx
+        "open_price": round(float(open_.iloc[0]) * 100),
+        "prev_high": round(float(high.tail(10).max()) * 100),
+        "prev_low": round(float(low.tail(10).min()) * 100),
+        "current_volume": int(volume.iloc[-1]),
+        "avg_volume": int(volume.tail(20).mean()),
+        "trend": trend,
+    }
 
 
-def get_news_sentiment():
-    api_key = "6bfc206c380c48aaa3240656d666283e"
-    url = f"https://newsapi.org/v2/everything?q=stock%20market%20india&apiKey={api_key}"
-
-    try:
-        response = requests.get(url, timeout=5) # Add timeout
-        data = response.json()
-        articles = data.get("articles", [])[:10] # Look at more articles
-
-        if not articles:
-            return "NEUTRAL"
-
-        score = 0
-        # Expanded keywords for better detection
-        negative_words = ["crash", "fall", "down", "bear", "sell", "loss", "negative", "drop"]
-        positive_words = ["rally", "gain", "up", "bull", "buy", "profit", "positive", "surge"]
-
-        for a in articles:
-            title = a.get("title", "").lower()
-            if any(word in title for word in negative_words):
-                score -= 1
-            if any(word in title for word in positive_words):
-                score += 1
-
-        if score > 0: return "BULLISH"
-        if score < 0: return "BEARISH"
-        return "NEUTRAL"
-    except Exception as e:
-        print(f"News Error: {e}") # This helps you see the error in Render Logs
-        return "NEUTRAL"
-
+# -----------------------------
+# GREEKS
+# -----------------------------
 
 def get_greeks(confidence):
     if confidence > 80:
         return {"delta": 0.6, "theta": -20}
-    else:
-        return {"delta": 0.4, "theta": -35}
+    return {"delta": 0.4, "theta": -35}
 
 
 # -----------------------------
-# Routes
+# ROUTES
 # -----------------------------
 
 @app.get("/")
@@ -109,24 +96,23 @@ def home():
 
 @app.get("/market")
 def market():
+    snap = get_market_snapshot()
 
-    # 🔹 Real data
-    chart_trend = get_chart_trend()
-    news_bias = get_news_sentiment()
+    if snap is None:
+        return {"error": "Market data not available"}
 
-    # 🔹 Simulated inputs
-    nifty = 22950
-    open_price = 22920
-    prev_high = 23020
-    prev_low = 22880
+    nifty = snap["nifty"]
+    open_price = snap["open_price"]
+    prev_high = snap["prev_high"]
+    prev_low = snap["prev_low"]
+    current_volume = snap["current_volume"]
+    avg_volume = snap["avg_volume"]
+    chart_trend = snap["trend"]
 
-    current_volume = 200000
-    avg_volume = 80000
-
-    momentum = 80
+    momentum = nifty - open_price
 
     # -----------------------------
-    # Logic
+    # STRUCTURE
     # -----------------------------
 
     if nifty > prev_high:
@@ -136,12 +122,20 @@ def market():
     else:
         structure = "RANGE"
 
+    # -----------------------------
+    # VOLUME
+    # -----------------------------
+
     if current_volume > avg_volume * 1.5:
         volume_strength = "HIGH"
     elif current_volume < avg_volume * 0.8:
         volume_strength = "LOW"
     else:
         volume_strength = "NORMAL"
+
+    # -----------------------------
+    # MOMENTUM
+    # -----------------------------
 
     if momentum > 40:
         momentum_strength = "STRONG BULLISH"
@@ -150,37 +144,23 @@ def market():
     else:
         momentum_strength = "WEAK"
 
-    if structure == "BREAKOUT" and volume_strength == "LOW":
-        trap = "FAKE BREAKOUT"
-    elif structure == "BREAKDOWN" and volume_strength == "LOW":
-        trap = "FAKE BREAKDOWN"
-    else:
-        trap = "VALID"
-
     # -----------------------------
-    # Decision
+    # DECISION
     # -----------------------------
 
-    if structure == "BREAKOUT" and volume_strength == "HIGH" and news_bias != "BEARISH" and chart_trend == "UPTREND":
+    if structure == "BREAKOUT" and volume_strength == "HIGH" and chart_trend == "UPTREND":
         action = "BUY CE"
         entry = prev_high
         sl = open_price
         target = prev_high + 120
         confidence = 85
 
-    elif structure == "BREAKDOWN" and volume_strength == "HIGH" and news_bias != "BULLISH" and chart_trend == "DOWNTREND":
+    elif structure == "BREAKDOWN" and volume_strength == "HIGH" and chart_trend == "DOWNTREND":
         action = "BUY PE"
         entry = prev_low
         sl = open_price
         target = prev_low - 120
         confidence = 85
-
-    elif trap != "VALID":
-        action = "AVOID TRADE"
-        entry = "-"
-        sl = "-"
-        target = "-"
-        confidence = 30
 
     else:
         action = "WAIT"
@@ -190,7 +170,7 @@ def market():
         confidence = 40
 
     # -----------------------------
-    # Option Selection
+    # OPTION SELECTION
     # -----------------------------
 
     strike_step = 50
@@ -209,7 +189,7 @@ def market():
     greeks = get_greeks(confidence)
 
     # -----------------------------
-    # Final Output
+    # RESPONSE
     # -----------------------------
 
     return {
@@ -218,7 +198,7 @@ def market():
         "volume": volume_strength,
         "momentum": momentum_strength,
         "trend": chart_trend,
-        "news": news_bias,
+        "news": "NEUTRAL",
         "action": action,
         "option_type": option_type,
         "strike": strike,
@@ -227,5 +207,5 @@ def market():
         "target": target,
         "confidence": confidence,
         "delta": greeks["delta"],
-        "theta": greeks["theta"]
+        "theta": greeks["theta"],
     }
