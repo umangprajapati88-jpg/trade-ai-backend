@@ -187,21 +187,23 @@ def market():
         strike = "-"
 
     greeks = get_greeks(confidence)
-# -----------------------------
-# EXPLANATION LOGIC
-# -----------------------------
 
-if action == "BUY CE":
-    explanation = "Bullish trend with momentum. Price is moving upward with strength, suggesting Call option."
+    # -----------------------------
+    # EXPLANATION
+    # -----------------------------
+    
+    if action == "BUY CE":
+        explanation = "Bullish trend with momentum. Price moving upward, suggesting Call option."
 
-elif action == "BUY PE":
-    explanation = "Bearish trend with momentum. Price is falling, suggesting Put option."
+    elif action == "BUY PE":
+        explanation = "Bearish trend with momentum. Price falling, suggesting Put option."
 
-elif structure == "RANGE":
-    explanation = "Market is in range. Waiting for breakout confirmation."
+    elif structure == "RANGE":
+        explanation = "Market is in range. Waiting for breakout confirmation."
 
-else:
-    explanation = "No clear setup. Avoiding trade until better conditions."
+    else:
+        explanation = "No clear setup. Avoiding trade."
+        
     # -----------------------------
     # RESPONSE
     # -----------------------------
