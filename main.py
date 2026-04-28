@@ -193,14 +193,14 @@ def market():
     # -----------------------------
     
     if action == "BUY CE":
-        explanation = "Bullish trend with momentum. Price moving upward, suggesting Call option."
+        explanation = f"Breakout above {prev_high} with {volume_strength} volume and bullish trend. Target {target}, SL {sl}."
 
     elif action == "BUY PE":
-        explanation = "Bearish trend with momentum. Price falling, suggesting Put option."
+        explanation = f"Breakdown below {prev_low} with {volume_strength} volume and bearish trend. Target {target}, SL {sl}."
 
     elif structure == "RANGE":
-        explanation = "Market is in range. Waiting for breakout confirmation."
-
+        explanation = f"Market stuck between {prev_low}–{prev_high}. Waiting for breakout confirmation."
+    
     else:
         explanation = "No clear setup. Avoiding trade."
         
