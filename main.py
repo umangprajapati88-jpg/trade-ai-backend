@@ -152,6 +152,28 @@ def market():
     
     if chart_trend == "DOWNTREND" and "BULLISH" in momentum_strength:
         momentum_strength = "WEAK"
+
+    # -----------------------------
+    # CONFIDENCE SCORE
+    # -----------------------------
+    score = 0
+    
+    if structure in ["BREAKOUT", "BREAKDOWN"]:
+        score += 25
+    
+    if volume_strength == "HIGH":
+        score += 20
+    
+    if momentum_strength in ["STRONG BULLISH", "STRONG BEARISH"]:
+        score += 20
+    
+    if oi_bias != "NEUTRAL":
+        score += 15
+    
+    if chart_trend in ["UPTREND", "DOWNTREND"]:
+        score += 20
+    
+    confidence_score = min(score, 100)
     
     # -----------------------------
     # DECISION (with OI)
@@ -246,28 +268,6 @@ def market():
     else:
         oi_bias = "NEUTRAL"
 
-    # -----------------------------
-    # CONFIDENCE SCORE
-    # -----------------------------
-    score = 0
-    
-    if structure in ["BREAKOUT", "BREAKDOWN"]:
-        score += 25
-    
-    if volume_strength == "HIGH":
-        score += 20
-    
-    if momentum_strength in ["STRONG BULLISH", "STRONG BEARISH"]:
-        score += 20
-    
-    if oi_bias != "NEUTRAL":
-        score += 15
-    
-    if chart_trend in ["UPTREND", "DOWNTREND"]:
-        score += 20
-    
-    confidence_score = min(score, 100)
-    
     # -----------------------------
     # RESPONSE
     # -----------------------------
