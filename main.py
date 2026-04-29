@@ -100,7 +100,16 @@ def market():
 
     if snap is None:
         return {"error": "Market data not available"}
-
+        
+# 👇 ADD HERE (outside, new function)
+@app.get("/test-fyers")
+def test_fyers():
+    import os
+    return {
+        "client_id": os.getenv("FYERS_CLIENT_ID"),
+        "token_present": bool(os.getenv("FYERS_ACCESS_TOKEN"))
+    }
+    
     nifty = snap["nifty"]
     open_price = snap["open_price"]
     prev_high = snap["prev_high"]
