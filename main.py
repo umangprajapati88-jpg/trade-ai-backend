@@ -174,9 +174,12 @@ def test_fyers():
     # OI + PCR PLACEHOLDER
     # -----------------------------
     
-    call_oi = 1200000
-    put_oi = 1350000
-    pcr = round(put_oi / call_oi, 2)
+    #call_oi = 1200000
+    #put_oi = 1350000
+    #pcr = round(put_oi / call_oi, 2)
+    # TEST FYERS OPTION CHAIN
+    response = fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
+    print(response)
     
     if pcr > 1.2:
         oi_bias = "BULLISH"
