@@ -151,6 +151,7 @@ def market():
     if (
         structure == "BREAKOUT"
         and volume_strength == "HIGH"
+        and momentum_strength == "STRONG BULLISH"
         and chart_trend == "UPTREND"
         and oi_bias != "BEARISH"
     ):
@@ -163,6 +164,7 @@ def market():
     elif (
         structure == "BREAKDOWN"
         and volume_strength == "HIGH"
+        and momentum_strength == "STRONG BEARISH"
         and chart_trend == "DOWNTREND"
         and oi_bias != "BULLISH"
     ):
