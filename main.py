@@ -21,10 +21,6 @@ fyers = fyersModel.FyersModel(
     is_async=False
 )
 
-# -----------------------------
-# DATA FETCH
-# -----------------------------
-
 def get_chart_data():
     for i in range(3):
         try:
@@ -36,10 +32,6 @@ def get_chart_data():
         time.sleep(2)
     return None
 
-
-# -----------------------------
-# MARKET SNAPSHOT (REAL DATA)
-# -----------------------------
 
 def get_market_snapshot():
     data = get_chart_data()
@@ -53,7 +45,6 @@ def get_market_snapshot():
     open_ = data["Open"]
     volume = data["Volume"]
 
-    # Handle multi-column case
     if hasattr(close, "columns"):
         close = close.iloc[:, 0]
         high = high.iloc[:, 0]
@@ -64,7 +55,6 @@ def get_market_snapshot():
     last_close = float(close.iloc[-1])
     prev_close = float(close.iloc[-5])
 
-    # Trend detection
     if last_close > prev_close:
         trend = "UPTREND"
     elif last_close < prev_close:
@@ -73,7 +63,7 @@ def get_market_snapshot():
         trend = "SIDEWAYS"
 
     return {
-        "nifty": round(last_close * 100),  # convert ETF to index approx
+        "nifty": round(last_close * 100),
         "open_price": round(float(open_.iloc[0]) * 100),
         "prev_high": round(float(high.tail(10).max()) * 100),
         "prev_low": round(float(low.tail(10).min()) * 100),
@@ -83,9 +73,42 @@ def get_market_snapshot():
     }
 
 
-# -----------------------------
-# GREEKS
-# -----------------------------
+def get_real_oi_pcr():
+    try:
+        response = fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
+
+        call_oi = 0
+        put_oi = 0
+
+        data = response.get("data", {})
+        chain = data.get("optionsChain", [])
+
+        for item in chain:
+            option_type = item.get("option_type")
+
+            if option_type == "CE":
+                call_oi += int(item.get("oi", 0) or 0)
+            elif option_type == "PE":
+                put_oi += int(item.get("oi", 0) or 0)
+
+        if call_oi == 0 and put_oi == 0:
+            return 1200000, 1350000, 1.12, "NEUTRAL"
+
+        pcr = round(put_oi / call_oi, 2) if call_oi > 0 else 0
+
+        if pcr > 1.2:
+            oi_bias = "BULLISH"
+        elif pcr < 0.8:
+            oi_bias = "BEARISH"
+        else:
+            oi_bias = "NEUTRAL"
+
+        return call_oi, put_oi, pcr, oi_bias
+
+    except Exception as e:
+        print("FYERS OI error:", e)
+        return 1200000, 1350000, 1.12, "NEUTRAL"
+
 
 def get_greeks(confidence):
     if confidence > 80:
@@ -93,13 +116,22 @@ def get_greeks(confidence):
     return {"delta": 0.4, "theta": -35}
 
 
-# -----------------------------
-# ROUTES
-# -----------------------------
-
 @app.get("/")
 def home():
     return {"status": "Trade AI backend running"}
+
+
+@app.get("/test-fyers")
+def test_fyers():
+    return {
+        "client_id": os.getenv("FYERS_CLIENT_ID"),
+        "token_present": bool(os.getenv("FYERS_ACCESS_TOKEN"))
+    }
+
+
+@app.get("/test-optionchain")
+def test_optionchain():
+    return fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
 
 
 @app.get("/market")
@@ -107,22 +139,29 @@ def market():
     snap = get_market_snapshot()
 
     if snap is None:
-        return {"error": "Market data not available"}
-        
-# 👇 ADD HERE (outside, new function)
-@app.get("/test-fyers")
-def test_fyers():
-    import os
-    return {
-        "client_id": os.getenv("FYERS_CLIENT_ID"),
-        "token_present": bool(os.getenv("FYERS_ACCESS_TOKEN"))
-    }
+        return {
+            "nifty": "-",
+            "structure": "UNKNOWN",
+            "volume": "UNKNOWN",
+            "momentum": "UNKNOWN",
+            "trend": "UNKNOWN",
+            "news": "NEUTRAL",
+            "action": "WAIT",
+            "option_type": "-",
+            "strike": "-",
+            "entry": "-",
+            "stop_loss": "-",
+            "target": "-",
+            "confidence": "0",
+            "delta": "-",
+            "theta": "-",
+            "explanation": "Market data unavailable. Waiting.",
+            "call_oi": "-",
+            "put_oi": "-",
+            "pcr": "-",
+            "oi_bias": "UNKNOWN"
+        }
 
-@app.get("/test-optionchain")
-def test_optionchain():
-    response = fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
-    return response
-    
     nifty = snap["nifty"]
     open_price = snap["open_price"]
     prev_high = snap["prev_high"]
@@ -131,11 +170,9 @@ def test_optionchain():
     avg_volume = snap["avg_volume"]
     chart_trend = snap["trend"]
 
-    momentum = nifty - open_price
+    call_oi, put_oi, pcr, oi_bias = get_real_oi_pcr()
 
-    # -----------------------------
-    # STRUCTURE
-    # -----------------------------
+    momentum = nifty - open_price
 
     if nifty > prev_high:
         structure = "BREAKOUT"
@@ -144,20 +181,12 @@ def test_optionchain():
     else:
         structure = "RANGE"
 
-    # -----------------------------
-    # VOLUME
-    # -----------------------------
-
     if current_volume > avg_volume * 1.5:
         volume_strength = "HIGH"
     elif current_volume < avg_volume * 0.8:
         volume_strength = "LOW"
     else:
         volume_strength = "NORMAL"
-
-    # -----------------------------
-    # MOMENTUM
-    # -----------------------------
 
     if momentum > 40:
         momentum_strength = "STRONG BULLISH"
@@ -166,59 +195,31 @@ def test_optionchain():
     else:
         momentum_strength = "WEAK"
 
-    # -----------------------------
-    # ALIGNMENT CHECK
-    # -----------------------------
     if chart_trend == "UPTREND" and "BEARISH" in momentum_strength:
         momentum_strength = "WEAK"
-    
+
     if chart_trend == "DOWNTREND" and "BULLISH" in momentum_strength:
         momentum_strength = "WEAK"
 
-    # -----------------------------
-    # OI + PCR PLACEHOLDER
-    # -----------------------------
-    
-    #call_oi = 1200000
-    #put_oi = 1350000
-    #pcr = round(put_oi / call_oi, 2)
-    # TEST FYERS OPTION CHAIN
-    response = fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
-    print(response)
-    
-    if pcr > 1.2:
-        oi_bias = "BULLISH"
-    elif pcr < 0.8:
-        oi_bias = "BEARISH"
-    else:
-        oi_bias = "NEUTRAL"
-    
-    # -----------------------------
-    # CONFIDENCE SCORE
-    # -----------------------------
     score = 0
-    
+
     if structure in ["BREAKOUT", "BREAKDOWN"]:
         score += 25
-    
+
     if volume_strength == "HIGH":
         score += 20
-    
+
     if momentum_strength in ["STRONG BULLISH", "STRONG BEARISH"]:
         score += 20
-    
+
     if oi_bias != "NEUTRAL":
         score += 15
-    
+
     if chart_trend in ["UPTREND", "DOWNTREND"]:
         score += 20
-    
+
     confidence_score = min(score, 100)
-    
-    # -----------------------------
-    # DECISION (with OI)
-    # -----------------------------
-    
+
     if (
         structure == "BREAKOUT"
         and volume_strength == "HIGH"
@@ -231,7 +232,7 @@ def test_optionchain():
         sl = open_price
         target = prev_high + 120
         confidence = confidence_score
-    
+
     elif (
         structure == "BREAKDOWN"
         and volume_strength == "HIGH"
@@ -244,7 +245,7 @@ def test_optionchain():
         sl = open_price
         target = prev_low - 120
         confidence = confidence_score
-    
+
     else:
         action = "WAIT"
         entry = "-"
@@ -252,15 +253,8 @@ def test_optionchain():
         target = "-"
         confidence = confidence_score
 
-    # -----------------------------
-    # SAFETY FILTER
-    # -----------------------------
     if confidence < 60:
         action = "WAIT"
-    
-    # -----------------------------
-    # OPTION SELECTION
-    # -----------------------------
 
     strike_step = 50
     atm_strike = round(nifty / strike_step) * strike_step
@@ -277,26 +271,14 @@ def test_optionchain():
 
     greeks = get_greeks(confidence)
 
-    # -----------------------------
-    # EXPLANATION
-    # -----------------------------
-    
     if action == "BUY CE":
         explanation = f"Breakout above {prev_high} with {volume_strength} volume and bullish trend. Target {target}, SL {sl}."
-
     elif action == "BUY PE":
         explanation = f"Breakdown below {prev_low} with {volume_strength} volume and bearish trend. Target {target}, SL {sl}."
-
     elif structure == "RANGE":
         explanation = f"Market stuck between {prev_low}–{prev_high}. Waiting for breakout confirmation."
-    
     else:
         explanation = "No clear setup. Avoiding trade."
-
-    
-    # -----------------------------
-    # RESPONSE
-    # -----------------------------
 
     return {
         "nifty": str(nifty),
@@ -319,4 +301,4 @@ def test_optionchain():
         "put_oi": str(put_oi),
         "pcr": str(pcr),
         "oi_bias": oi_bias
-}
+    }
