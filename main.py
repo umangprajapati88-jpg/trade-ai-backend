@@ -145,6 +145,15 @@ def market():
         momentum_strength = "WEAK"
 
     # -----------------------------
+    # ALIGNMENT CHECK
+    # -----------------------------
+    if chart_trend == "UPTREND" and "BEARISH" in momentum_strength:
+        momentum_strength = "WEAK"
+    
+    if chart_trend == "DOWNTREND" and "BULLISH" in momentum_strength:
+        momentum_strength = "WEAK"
+    
+    # -----------------------------
     # DECISION (with OI)
     # -----------------------------
     
