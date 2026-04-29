@@ -182,7 +182,7 @@ def market():
     # -----------------------------
     # SAFETY FILTER
     # -----------------------------
-    if confidence < 60:
+    if confidence < 50:
         action = "WAIT"
     
     # -----------------------------
