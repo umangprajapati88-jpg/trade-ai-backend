@@ -154,6 +154,21 @@ def market():
         momentum_strength = "WEAK"
 
     # -----------------------------
+    # OI + PCR PLACEHOLDER
+    # -----------------------------
+    
+    call_oi = 1200000
+    put_oi = 1350000
+    pcr = round(put_oi / call_oi, 2)
+    
+    if pcr > 1.2:
+        oi_bias = "BULLISH"
+    elif pcr < 0.8:
+        oi_bias = "BEARISH"
+    else:
+        oi_bias = "NEUTRAL"
+    
+    # -----------------------------
     # CONFIDENCE SCORE
     # -----------------------------
     score = 0
@@ -253,21 +268,7 @@ def market():
     else:
         explanation = "No clear setup. Avoiding trade."
 
-    # -----------------------------
-    # OI + PCR PLACEHOLDER
-    # -----------------------------
     
-    call_oi = 1200000
-    put_oi = 1350000
-    pcr = round(put_oi / call_oi, 2)
-    
-    if pcr > 1.2:
-        oi_bias = "BULLISH"
-    elif pcr < 0.8:
-        oi_bias = "BEARISH"
-    else:
-        oi_bias = "NEUTRAL"
-
     # -----------------------------
     # RESPONSE
     # -----------------------------
