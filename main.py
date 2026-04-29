@@ -239,5 +239,9 @@ def market():
         "confidence": str(confidence),
         "delta": str(greeks["delta"]),
         "theta": str(greeks["theta"]),
-        "explanation": explanation
+        "explanation": explanation,
+        "call_oi": str(call_oi),
+        "put_oi": str(put_oi),
+        "pcr": str(pcr),
+        "oi_bias": oi_bias
 }
