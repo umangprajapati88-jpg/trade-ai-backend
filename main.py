@@ -145,23 +145,33 @@ def market():
         momentum_strength = "WEAK"
 
     # -----------------------------
-    # DECISION
+    # DECISION (with OI)
     # -----------------------------
-
-    if chart_trend == "UPTREND" and volume_strength != "LOW":
+    
+    if (
+        structure == "BREAKOUT"
+        and volume_strength == "HIGH"
+        and chart_trend == "UPTREND"
+        and oi_bias != "BEARISH"
+    ):
         action = "BUY CE"
-        entry = nifty
-        sl = nifty - 50
-        target = nifty + 100
-        confidence = 70
-
-    elif structure == "BREAKDOWN" and volume_strength == "HIGH" and chart_trend == "DOWNTREND":
+        entry = prev_high
+        sl = open_price
+        target = prev_high + 120
+        confidence = 85
+    
+    elif (
+        structure == "BREAKDOWN"
+        and volume_strength == "HIGH"
+        and chart_trend == "DOWNTREND"
+        and oi_bias != "BULLISH"
+    ):
         action = "BUY PE"
         entry = prev_low
         sl = open_price
         target = prev_low - 120
         confidence = 85
-
+    
     else:
         action = "WAIT"
         entry = "-"
