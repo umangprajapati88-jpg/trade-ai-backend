@@ -117,6 +117,11 @@ def test_fyers():
         "client_id": os.getenv("FYERS_CLIENT_ID"),
         "token_present": bool(os.getenv("FYERS_ACCESS_TOKEN"))
     }
+
+@app.get("/test-optionchain")
+def test_optionchain():
+    response = fyers.optionchain({"symbol": "NSE:NIFTY50-INDEX"})
+    return response
     
     nifty = snap["nifty"]
     open_price = snap["open_price"]
