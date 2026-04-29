@@ -182,7 +182,7 @@ def market():
     # -----------------------------
     # SAFETY FILTER
     # -----------------------------
-    if confidence < 50:
+    if confidence < 60:
         action = "WAIT"
     
     # -----------------------------
@@ -235,10 +235,6 @@ def market():
     else:
         oi_bias = "NEUTRAL"
 
-    if chart_trend == "DOWNTREND":
-        action = "BUY PE"
-        confidence = 70
-    
     # -----------------------------
     # RESPONSE
     # -----------------------------
