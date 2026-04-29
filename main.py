@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 import time
+import os
+from fyers_apiv3 import fyersModel
 
 app = FastAPI()
 
@@ -11,6 +13,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+fyers = fyersModel.FyersModel(
+    client_id=os.getenv("FYERS_CLIENT_ID"),
+    token=os.getenv("FYERS_ACCESS_TOKEN"),
+    is_async=False
 )
 
 # -----------------------------
