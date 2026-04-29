@@ -234,6 +234,10 @@ def market():
         oi_bias = "BEARISH"
     else:
         oi_bias = "NEUTRAL"
+
+    if chart_trend == "DOWNTREND":
+    action = "BUY PE"
+    confidence = 70
     
     # -----------------------------
     # RESPONSE
