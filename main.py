@@ -168,7 +168,7 @@ def market():
         entry = prev_high
         sl = open_price
         target = prev_high + 120
-        confidence = 85
+        confidence = confidence_score
     
     elif (
         structure == "BREAKDOWN"
@@ -181,14 +181,14 @@ def market():
         entry = prev_low
         sl = open_price
         target = prev_low - 120
-        confidence = 85
+        confidence = confidence_score
     
     else:
         action = "WAIT"
         entry = "-"
         sl = "-"
         target = "-"
-        confidence = 40
+        confidence = confidence_score
 
     # -----------------------------
     # SAFETY FILTER
@@ -246,6 +246,28 @@ def market():
     else:
         oi_bias = "NEUTRAL"
 
+    # -----------------------------
+    # CONFIDENCE SCORE
+    # -----------------------------
+    score = 0
+    
+    if structure in ["BREAKOUT", "BREAKDOWN"]:
+        score += 25
+    
+    if volume_strength == "HIGH":
+        score += 20
+    
+    if momentum_strength in ["STRONG BULLISH", "STRONG BEARISH"]:
+        score += 20
+    
+    if oi_bias != "NEUTRAL":
+        score += 15
+    
+    if chart_trend in ["UPTREND", "DOWNTREND"]:
+        score += 20
+    
+    confidence_score = min(score, 100)
+    
     # -----------------------------
     # RESPONSE
     # -----------------------------
